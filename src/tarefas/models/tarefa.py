@@ -1,21 +1,29 @@
 from datetime import datetime
- 
+
 from tarefas.models.database import Database
- 
+import uuid
+
+
 class Tarefa:
     """Provê métodos para armazenar, recuperar e processar os dados das
     tarefas criadas a partir do formulário principal.
     """
  
-    def __init__(self, titulo, id = None, data_conclusao = None):
+    def __init__(self, titulo, id = None, data_conclusao = None, uuid_publico = None):
         self.id = id
         self.titulo = titulo
         self.data_conclusao = data_conclusao
+        self.uuid_publico = uuid_publico
  
     def salvarTarefa(self):
         """Salva a tarefa no banco de dados."""
-        sql = 'INSERT INTO tarefas (titulo_tarefa, data_conclusao) VALUES (%s, %s);'
-        params = (self.titulo, self.data_conclusao)
+
+        if not self.uuid_publico:
+            self.uuid_publico = str(uuid.uuid7())
+
+        sql = 'INSERT INTO tarefas (titulo_tarefa, data_conclusao, uuid_publico) VALUES (%s, %s, %s);'
+
+        params = (self.titulo, self.data_conclusao, self.uuid_publico)
  
         with Database() as db:
             db.executar(sql, params)
@@ -23,7 +31,7 @@ class Tarefa:
     @staticmethod
     def listarTarefas() -> list:
         """Retorna uma lista com todas as tarefas cadastradas."""
-        sql = '''SELECT id_tarefa, titulo_tarefa, data_conclusao
+        sql = '''SELECT id_tarefa, titulo_tarefa, data_conclusao, uuid_publico
         FROM tarefas LIMIT 100; '''
  
         with Database() as db:
@@ -32,38 +40,43 @@ class Tarefa:
         return tarefas_banco if tarefas_banco else []
    
     @staticmethod
-    def apagarTarefa(id_tarefa):
-        sql = """DELETE FROM tarefas WHERE id_tarefa = %s;"""
-        params = (id_tarefa,)
+    def apagarTarefa(uuid_publico):
+        sql = """DELETE FROM tarefas WHERE uuid_publico = %s;"""
+        params = (uuid_publico,)
         with Database() as db:
             db.executar(sql, params)
- 
     @classmethod
-    def carregarTarefa(cls, id_tarefa):
+    def carregarTarefa(cls, uuid_publico):
         """Carrega uma tarefa específica do banco de dados na memória."""
-        sql = 'SELECT id_tarefa, titulo_tarefa, data_conclusao FROM tarefas WHERE id_tarefa = %s;'
-        params = (id_tarefa,)
+        sql = '''SELECT id_tarefa, titulo_tarefa, data_conclusao, uuid_publico 
+                 FROM tarefas 
+                 WHERE uuid_publico = %s;'''
+        params = (uuid_publico,)
        
         with Database() as db:
             resultado = db.executar(sql, params)
            
         if resultado:
             dados = resultado[0]
-            return cls(titulo=dados['titulo_tarefa'], id=dados['id_tarefa'], data_conclusao=dados['data_conclusao'])
+            return cls(
+            titulo=dados['titulo_tarefa'],
+            data_conclusao=dados['data_conclusao'], 
+            uuid_publico=dados['uuid_publico']
+            )
         return None
  
     def atualizarTarefa(self):
         """Atualiza a tarefa existente no banco com os novos valores."""
         sql = '''UPDATE tarefas
-                 SET titulo_tarefa = %s, data_conclusao = %s
-                 WHERE id_tarefa = %s;'''
-        params = (self.titulo, self.data_conclusao, self.id)
-       
+            SET titulo_tarefa = %s, data_conclusao = %s
+            WHERE uuid_publico = %s;'''
+        params = (self.titulo, self.data_conclusao, self.uuid_publico)
+   
         with Database() as db:
             db.executar(sql, params)
  
 class Renomear:
-    def __init__(self, id,  n_titulo, n_data_conclusao = None ):
+    def __init__(self, uuid_publico,  n_titulo, n_data_conclusao = None ):
         self.n_titulo = n_titulo
         self.n_data_conclusao = n_data_conclusao
  
@@ -73,7 +86,7 @@ class Renomear:
                 titulo_tarefa = '',
                 data_conclusao = 00:00:00
                 WHERE
-                id = id;'''
+                uuid_publico = uuid_publico;'''
  
 # Área 51 (testes)
 #tarefa = Tarefa('Minha nova tarefa')

@@ -36,25 +36,25 @@ def home():
         tarefas_da_pagina=tarefas
     )
  
-@app.route('/delete/<int:id>')
-def apagar_id_especificado(id):
-    Tarefa.apagarTarefa(id)
+@app.route('/delete/<string:uuid_publico>')
+def apagar_id_especificado(uuid_publico):
+    Tarefa.apagarTarefa(uuid_publico)
     return redirect(url_for('home'))
  
-@app.route('/edit/<int:id>', methods=['GET', 'POST'])
-def editar_tarefa(id):
+@app.route('/edit/<string:uuid_publico>', methods=['GET', 'POST'])
+def editar_tarefa(uuid_publico):
     if request.method == 'POST':
         titulo_form = request.form['tituloTarefa']
         data_conclusao_form = request.form['dataConclusao']
         data_corrigida = data_conclusao_form or None
  
-        tarefa = Tarefa(titulo=titulo_form, id=id, data_conclusao=data_corrigida)
+        tarefa = Tarefa(titulo=titulo_form, data_conclusao=data_corrigida, uuid_publico=uuid_publico)
         tarefa.atualizarTarefa()
  
         return redirect(url_for('home'))
  
     tarefas = Tarefa.listarTarefas()
-    tarefa_selecionada = Tarefa.carregarTarefa(id)
+    tarefa_selecionada = Tarefa.carregarTarefa(uuid_publico)
  
     return render_template(
         'base.html',
