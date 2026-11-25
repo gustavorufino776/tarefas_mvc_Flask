@@ -13,6 +13,7 @@ class Database:
         self.username = getenv('DB_USER')
         self.password = getenv('DB_PASSWORD')
         self.database = getenv('DB_SCHEMA')
+        self.port = getenv('DB_PORT') or 3306
         self.connection = None
         self.cursor = None
 
@@ -22,7 +23,8 @@ class Database:
                 host = self.host,
                 database = self.database,
                 user = self.username,
-                password = self.password
+                password = self.password,
+                port = self.port
             )
 
             if self.connection.is_connected():
